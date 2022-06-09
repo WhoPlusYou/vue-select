@@ -47,6 +47,11 @@ export default {
      * @return {void}
      */
     typeAheadDown() {
+      // Open the listbox if it isn't open already
+      if (!this.open) {
+        this.open = true
+      }
+
       for (
         let i = this.typeAheadPointer + 1;
         i < this.filteredOptions.length;
