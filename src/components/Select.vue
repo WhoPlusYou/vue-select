@@ -113,7 +113,7 @@
             'vs__dropdown-option--highlight': index === typeAheadPointer,
             'vs__dropdown-option--disabled': !selectable(option),
           }"
-          :aria-selected="index === typeAheadPointer ? true : null"
+          :aria-selected="isOptionSelected(option) ? 'true' : 'false'"
           @mouseover="selectable(option) ? (typeAheadPointer = index) : null"
           @click.prevent.stop="selectable(option) ? select(option) : null"
         >
