@@ -1067,7 +1067,6 @@ export default {
     onAfterSelect(option) {
       if (this.closeOnSelect) {
         this.open = !this.open
-        this.searchEl.blur()
       }
 
       if (this.clearSearchOnSelect) {
@@ -1129,7 +1128,7 @@ export default {
       }
 
       if (this.open && targetIsNotSearch) {
-        this.searchEl.blur()
+        this.open = false
       } else if (!this.disabled) {
         this.open = true
         this.searchEl.focus()
