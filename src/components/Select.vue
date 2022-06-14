@@ -11,7 +11,10 @@
       @mousedown="toggleDropdown($event)"
     >
       <div ref="selectedOptions" class="vs__selected-options">
-        <ul class="vs__selected-options-list">
+        <ul
+          class="vs__selected-options-list"
+          :role="multiple ? undefined : 'none'"
+        >
           <slot
             v-for="option in selectedValue"
             name="selected-option-container"
@@ -20,7 +23,11 @@
             :multiple="multiple"
             :disabled="disabled"
           >
-            <li :key="getOptionKey(option)" class="vs__selected">
+            <li
+              :key="getOptionKey(option)"
+              class="vs__selected"
+              :role="multiple ? undefined : 'none'"
+            >
               <slot
                 name="selected-option"
                 v-bind="normalizeOptionForSlot(option)"
