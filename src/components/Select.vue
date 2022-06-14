@@ -6,53 +6,57 @@
   <div :dir="dir" class="v-select" :class="stateClasses">
     <slot name="header" v-bind="scope.header" />
     <div
-      :id="`vs${uid}__combobox`"
       ref="toggle"
       class="vs__dropdown-toggle"
-      role="combobox"
-      :aria-expanded="dropdownOpen.toString()"
-      :aria-owns="`vs${uid}__listbox`"
-      :aria-label="i18n.search.ariaLabel"
       @mousedown="toggleDropdown($event)"
     >
       <div ref="selectedOptions" class="vs__selected-options">
-        <slot
-          v-for="option in selectedValue"
-          name="selected-option-container"
-          :option="normalizeOptionForSlot(option)"
-          :deselect="deselect"
-          :multiple="multiple"
-          :disabled="disabled"
+        <ul
+          class="vs__selected-options-list"
+          :role="multiple ? undefined : 'none'"
         >
-          <span :key="getOptionKey(option)" class="vs__selected">
-            <slot
-              name="selected-option"
-              v-bind="normalizeOptionForSlot(option)"
+          <slot
+            v-for="option in selectedValue"
+            name="selected-option-container"
+            :option="normalizeOptionForSlot(option)"
+            :deselect="deselect"
+            :multiple="multiple"
+            :disabled="disabled"
+          >
+            <li
+              :key="getOptionKey(option)"
+              class="vs__selected"
+              :role="multiple ? undefined : 'none'"
             >
-              {{ getOptionLabel(option) }}
-            </slot>
-            <button
-              v-if="multiple"
-              ref="deselectButtons"
-              :disabled="disabled"
-              type="button"
-              class="vs__deselect"
-              :title="i18n.deselectButton.title(getOptionLabel(option))"
-              :aria-label="
-                i18n.deselectButton.ariaLabel(getOptionLabel(option))
-              "
-              @click="deselect(option)"
-            >
-              <component :is="childComponents.Deselect" />
-            </button>
-          </span>
-        </slot>
-
+              <slot
+                name="selected-option"
+                v-bind="normalizeOptionForSlot(option)"
+              >
+                {{ getOptionLabel(option) }}
+              </slot>
+              <button
+                v-if="multiple"
+                ref="deselectButtons"
+                :disabled="disabled"
+                type="button"
+                class="vs__deselect"
+                :title="i18n.deselectButton.title(getOptionLabel(option))"
+                :aria-label="
+                  i18n.deselectButton.ariaLabel(getOptionLabel(option))
+                "
+                @click="deselectButton(option)"
+              >
+                <component :is="childComponents.Deselect" />
+              </button>
+            </li>
+          </slot>
+        </ul>
         <slot name="search" v-bind="scope.search">
           <input
+            role="combobox"
             class="vs__search"
-            v-bind="scope.search.attributes"
-            v-on="scope.search.events"
+            v-bind="scope.combobox.attributes"
+            v-on="scope.combobox.events"
           />
         </slot>
       </div>
@@ -89,13 +93,12 @@
     <transition :name="transition">
       <ul
         v-if="dropdownOpen"
-        :id="`vs${uid}__listbox`"
         ref="dropdownMenu"
-        :key="`vs${uid}__listbox`"
         v-append-to-body
         class="vs__dropdown-menu"
         role="listbox"
         tabindex="-1"
+        v-bind="scope.listbox.attributes"
         @mousedown.prevent="onMousedown"
         @mouseup="onMouseUp"
       >
@@ -113,7 +116,7 @@
             'vs__dropdown-option--highlight': index === typeAheadPointer,
             'vs__dropdown-option--disabled': !selectable(option),
           }"
-          :aria-selected="index === typeAheadPointer ? true : null"
+          :aria-selected="isOptionSelected(option) ? 'true' : 'false'"
           @mouseover="selectable(option) ? (typeAheadPointer = index) : null"
           @click.prevent.stop="selectable(option) ? select(option) : null"
         >
@@ -130,7 +133,7 @@
       </ul>
       <ul
         v-else
-        :id="`vs${uid}__listbox`"
+        :id="listboxID"
         role="listbox"
         style="display: none; visibility: hidden"
       ></ul>
@@ -687,6 +690,49 @@ export default {
       type: [String, Number],
       default: () => uniqueId(),
     },
+
+    /**
+     * A unique identifier for the element with the listbox.
+     * Must be unique for every instance of the component.
+     */
+    listboxID: {
+      type: String,
+      default: function () {
+        return `vs${this.uid}__listbox`
+      },
+    },
+
+    /**
+     * A unique identifier for the element with the combobox role.
+     * Must be unique for every instance of the component.
+     */
+    comboboxID: {
+      type: String,
+      default: function () {
+        return `vs${this.uid}__combobox`
+      },
+    },
+
+    /**
+     * Equivalent to the `aria-labelledby` attribute on inputs.
+     */
+    ariaLabelledby: {
+      type: String,
+      default: undefined,
+    },
+
+    /**
+     * Equivalent to the `aria-label` attribute on inputs.
+     */
+    ariaLabel: {
+      type: String,
+      default: undefined,
+    },
+
+    required: {
+      type: Boolean,
+      default: undefined,
+    },
   },
 
   data() {
@@ -776,16 +822,27 @@ export default {
         filteredOptions: this.filteredOptions,
       }
       return {
-        search: {
+        combobox: {
           attributes: {
             disabled: this.disabled,
             placeholder: this.searchPlaceholder,
             tabindex: this.tabindex,
             readonly: !this.searchable,
-            id: this.inputId,
+            id: this.comboboxID,
             'aria-autocomplete': 'list',
-            'aria-labelledby': `vs${this.uid}__combobox`,
-            'aria-controls': `vs${this.uid}__listbox`,
+            'aria-labelledby': this.ariaLabelledby,
+            'aria-controls': this.listboxID,
+            'aria-expanded': this.dropdownOpen.toString(),
+            'aria-owns': this.listboxID,
+            'aria-label': this.ariaLabel,
+            'aria-required': this.required,
+            'aria-haspopup': 'listbox',
+            tabIndex: '0',
+            autoComplete: 'off',
+            autoCorrect: 'off',
+            autoCapitalize: 'none',
+            spellCheck: 'false',
+            role: 'textbox',
             ref: 'search',
             type: 'search',
             autocomplete: this.autocomplete,
@@ -802,7 +859,17 @@ export default {
             keydown: this.onSearchKeyDown,
             blur: this.onSearchBlur,
             focus: this.onSearchFocus,
-            input: (e) => (this.search = e.target.value),
+            input: (e) => {
+              this.search = e.target.value
+              this.open = true
+            },
+          },
+        },
+        listbox: {
+          attributes: {
+            id: this.listboxID,
+            key: this.listboxID,
+            'aria-multiselectable': this.multiple.toString(),
           },
         },
         spinner: {
@@ -1052,6 +1119,34 @@ export default {
     },
 
     /**
+     * De-select a given option when button is pressed.
+     * @param  {Object|String} option
+     * @return {void}
+     */
+    deselectButton(option) {
+      // Get the index of the option to be removed
+      const index = this.selectedValue.findIndex((val) =>
+        this.optionComparator(val, option)
+      )
+
+      this.deselect(option)
+
+      // Focus the previous option in the list of selected options.
+      // Unless the first index is being removed, in which case focus the next option.
+      // If no options are left after this deselection, focus the input.
+      if (
+        this.$refs.deselectButtons &&
+        this.$refs.deselectButtons.length > 1 &&
+        index >= 0
+      ) {
+        let newIndex = index === 0 ? 1 : index - 1
+        this.$refs.deselectButtons[newIndex].focus()
+      } else {
+        this.searchEl.focus()
+      }
+    },
+
+    /**
      * Clears the currently selected value(s)
      * @return {void}
      */
@@ -1067,7 +1162,6 @@ export default {
     onAfterSelect(option) {
       if (this.closeOnSelect) {
         this.open = !this.open
-        this.searchEl.blur()
       }
 
       if (this.clearSearchOnSelect) {
@@ -1129,7 +1223,7 @@ export default {
       }
 
       if (this.open && targetIsNotSearch) {
-        this.searchEl.blur()
+        this.open = false
       } else if (!this.disabled) {
         this.open = true
         this.searchEl.focus()
@@ -1269,7 +1363,7 @@ export default {
      */
     onEscape() {
       if (!this.search.length) {
-        this.searchEl.blur()
+        this.closeSearchOptions()
       } else {
         this.search = ''
       }
@@ -1350,7 +1444,7 @@ export default {
         //  up.prevent
         38: (e) => {
           e.preventDefault()
-          return this.typeAheadUp()
+          return e.altKey ? this.closeSearchOptions() : this.typeAheadUp()
         },
         //  down.prevent
         40: (e) => {
