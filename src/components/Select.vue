@@ -16,38 +16,39 @@
       @mousedown="toggleDropdown($event)"
     >
       <div ref="selectedOptions" class="vs__selected-options">
-        <slot
-          v-for="option in selectedValue"
-          name="selected-option-container"
-          :option="normalizeOptionForSlot(option)"
-          :deselect="deselect"
-          :multiple="multiple"
-          :disabled="disabled"
-        >
-          <span :key="getOptionKey(option)" class="vs__selected">
-            <slot
-              name="selected-option"
-              v-bind="normalizeOptionForSlot(option)"
-            >
-              {{ getOptionLabel(option) }}
-            </slot>
-            <button
-              v-if="multiple"
-              ref="deselectButtons"
-              :disabled="disabled"
-              type="button"
-              class="vs__deselect"
-              :title="i18n.deselectButton.title(getOptionLabel(option))"
-              :aria-label="
-                i18n.deselectButton.ariaLabel(getOptionLabel(option))
-              "
-              @click="deselect(option)"
-            >
-              <component :is="childComponents.Deselect" />
-            </button>
-          </span>
-        </slot>
-
+        <ul class="vs__selected-options-list">
+          <slot
+            v-for="option in selectedValue"
+            name="selected-option-container"
+            :option="normalizeOptionForSlot(option)"
+            :deselect="deselect"
+            :multiple="multiple"
+            :disabled="disabled"
+          >
+            <li :key="getOptionKey(option)" class="vs__selected">
+              <slot
+                name="selected-option"
+                v-bind="normalizeOptionForSlot(option)"
+              >
+                {{ getOptionLabel(option) }}
+              </slot>
+              <button
+                v-if="multiple"
+                ref="deselectButtons"
+                :disabled="disabled"
+                type="button"
+                class="vs__deselect"
+                :title="i18n.deselectButton.title(getOptionLabel(option))"
+                :aria-label="
+                  i18n.deselectButton.ariaLabel(getOptionLabel(option))
+                "
+                @click="deselectButton(option)"
+              >
+                <component :is="childComponents.Deselect" />
+              </button>
+            </li>
+          </slot>
+        </ul>
         <slot name="search" v-bind="scope.search">
           <input
             class="vs__search"
@@ -1049,6 +1050,34 @@ export default {
         })
       )
       this.$emit('option:deselected', option)
+    },
+
+    /**
+     * De-select a given option when button is pressed.
+     * @param  {Object|String} option
+     * @return {void}
+     */
+    deselectButton(option) {
+      // Get the index of the option to be removed
+      const index = this.selectedValue.findIndex((val) =>
+        this.optionComparator(val, option)
+      )
+
+      this.deselect(option)
+
+      // Focus the previous option in the list of selected options.
+      // Unless the first index is being removed, in which case focus the next option.
+      // If no options are left after this deselection, focus the input.
+      if (
+        this.$refs.deselectButtons &&
+        this.$refs.deselectButtons.length > 1 &&
+        index >= 0
+      ) {
+        let newIndex = index === 0 ? 1 : index - 1
+        this.$refs.deselectButtons[newIndex].focus()
+      } else {
+        this.searchEl.focus()
+      }
     },
 
     /**

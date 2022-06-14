@@ -4,8 +4,10 @@
     The dropdown toggle is the primary wrapper of the component. It
     has two direct descendants: .vs__selected-options, and .vs__actions.
 
-    .vs__selected-options holds the .vs__selected's as well as the
+    .vs__selected-options holds .vs__selected-options-list as well as the
     main search input.
+
+    .vs__selected-options-list holds the .vs__selected's.
 
     .vs__actions holds the clear button and dropdown toggle.
  */
@@ -32,6 +34,13 @@ $border-radius: $vs-border-radius;
     flex-wrap: wrap;
     padding: 0 2px;
     position: relative;
+}
+
+.vs__selected-options-list {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0;
+    padding: 0;
 }
 
 .vs__actions {
