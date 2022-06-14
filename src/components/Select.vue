@@ -1350,7 +1350,7 @@ export default {
         //  up.prevent
         38: (e) => {
           e.preventDefault()
-          return this.typeAheadUp()
+          return e.altKey ? this.closeSearchOptions() : this.typeAheadUp()
         },
         //  down.prevent
         40: (e) => {
