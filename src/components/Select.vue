@@ -6,13 +6,8 @@
   <div :dir="dir" class="v-select" :class="stateClasses">
     <slot name="header" v-bind="scope.header" />
     <div
-      :id="`vs${uid}__combobox`"
       ref="toggle"
       class="vs__dropdown-toggle"
-      role="combobox"
-      :aria-expanded="dropdownOpen.toString()"
-      :aria-owns="`vs${uid}__listbox`"
-      :aria-label="i18n.search.ariaLabel"
       @mousedown="toggleDropdown($event)"
     >
       <div ref="selectedOptions" class="vs__selected-options">
@@ -51,9 +46,10 @@
         </ul>
         <slot name="search" v-bind="scope.search">
           <input
+            role="combobox"
             class="vs__search"
-            v-bind="scope.search.attributes"
-            v-on="scope.search.events"
+            v-bind="scope.combobox.attributes"
+            v-on="scope.combobox.events"
           />
         </slot>
       </div>
@@ -90,13 +86,12 @@
     <transition :name="transition">
       <ul
         v-if="dropdownOpen"
-        :id="`vs${uid}__listbox`"
         ref="dropdownMenu"
-        :key="`vs${uid}__listbox`"
         v-append-to-body
         class="vs__dropdown-menu"
         role="listbox"
         tabindex="-1"
+        v-bind="scope.listbox.attributes"
         @mousedown.prevent="onMousedown"
         @mouseup="onMouseUp"
       >
@@ -131,7 +126,7 @@
       </ul>
       <ul
         v-else
-        :id="`vs${uid}__listbox`"
+        :id="listboxID"
         role="listbox"
         style="display: none; visibility: hidden"
       ></ul>
@@ -688,6 +683,49 @@ export default {
       type: [String, Number],
       default: () => uniqueId(),
     },
+
+    /**
+     * A unique identifier for the element with the listbox.
+     * Must be unique for every instance of the component.
+     */
+    listboxID: {
+      type: String,
+      default: function () {
+        return `vs${this.uid}__listbox`
+      },
+    },
+
+    /**
+     * A unique identifier for the element with the combobox role.
+     * Must be unique for every instance of the component.
+     */
+    comboboxID: {
+      type: String,
+      default: function () {
+        return `vs${this.uid}__combobox`
+      },
+    },
+
+    /**
+     * Equivalent to the `aria-labelledby` attribute on inputs.
+     */
+    ariaLabelledby: {
+      type: String,
+      default: undefined,
+    },
+
+    /**
+     * Equivalent to the `aria-label` attribute on inputs.
+     */
+    ariaLabel: {
+      type: String,
+      default: undefined,
+    },
+
+    required: {
+      type: Boolean,
+      default: undefined,
+    },
   },
 
   data() {
@@ -777,16 +815,27 @@ export default {
         filteredOptions: this.filteredOptions,
       }
       return {
-        search: {
+        combobox: {
           attributes: {
             disabled: this.disabled,
             placeholder: this.searchPlaceholder,
             tabindex: this.tabindex,
             readonly: !this.searchable,
-            id: this.inputId,
+            id: this.comboboxID,
             'aria-autocomplete': 'list',
-            'aria-labelledby': `vs${this.uid}__combobox`,
-            'aria-controls': `vs${this.uid}__listbox`,
+            'aria-labelledby': this.ariaLabelledby,
+            'aria-controls': this.listboxID,
+            'aria-expanded': this.dropdownOpen.toString(),
+            'aria-owns': this.listboxID,
+            'aria-label': this.ariaLabel,
+            'aria-required': this.required,
+            'aria-haspopup': 'listbox',
+            tabIndex: '0',
+            autoComplete: 'off',
+            autoCorrect: 'off',
+            autoCapitalize: 'none',
+            spellCheck: 'false',
+            role: 'textbox',
             ref: 'search',
             type: 'search',
             autocomplete: this.autocomplete,
@@ -803,7 +852,17 @@ export default {
             keydown: this.onSearchKeyDown,
             blur: this.onSearchBlur,
             focus: this.onSearchFocus,
-            input: (e) => (this.search = e.target.value),
+            input: (e) => {
+              this.search = e.target.value
+              this.open = true
+            },
+          },
+        },
+        listbox: {
+          attributes: {
+            id: this.listboxID,
+            key: this.listboxID,
+            'aria-multiselectable': this.multiple.toString(),
           },
         },
         spinner: {
