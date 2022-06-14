@@ -1269,7 +1269,7 @@ export default {
      */
     onEscape() {
       if (!this.search.length) {
-        this.searchEl.blur()
+        this.closeSearchOptions()
       } else {
         this.search = ''
       }
