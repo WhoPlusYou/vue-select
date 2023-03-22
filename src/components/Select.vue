@@ -571,7 +571,10 @@ export default {
      */
     selectOnKeyCodes: {
       type: Array,
-      default: () => [13],
+      default: () => [
+        // enter
+        13,
+      ],
     },
 
     /**
@@ -768,6 +771,7 @@ export default {
             compositionstart: () => (this.isComposing = true),
             compositionend: () => (this.isComposing = false),
             keydown: this.onSearchKeyDown,
+            keypress: this.onSearchKeyPress,
             blur: this.onSearchBlur,
             focus: this.onSearchFocus,
             input: (e) => (this.search = e.target.value),
@@ -953,6 +957,12 @@ export default {
     open(isOpen) {
       this.$emit(isOpen ? 'open' : 'close')
     },
+
+    search(search) {
+      if (search.length) {
+        this.open = true
+      }
+    },
   },
 
   created() {
@@ -1035,11 +1045,13 @@ export default {
     onAfterSelect(option) {
       if (this.closeOnSelect) {
         this.open = !this.open
-        this.searchEl.blur()
       }
 
       if (this.clearSearchOnSelect) {
         this.search = ''
+      }
+      if (this.noDrop && this.multiple) {
+        this.$nextTick(() => this.$refs.search.focus())
       }
     },
 
@@ -1237,7 +1249,7 @@ export default {
      */
     onEscape() {
       if (!this.search.length) {
-        this.searchEl.blur()
+        this.open = false
       } else {
         this.search = ''
       }
@@ -1299,7 +1311,7 @@ export default {
 
     /**
      * Search <input> KeyBoardEvent handler.
-     * @param e {KeyboardEvent}
+     * @param {KeyboardEvent} e
      * @return {Function}
      */
     onSearchKeyDown(e) {
@@ -1318,11 +1330,19 @@ export default {
         //  up.prevent
         38: (e) => {
           e.preventDefault()
+          if (!this.open) {
+            this.open = true
+            return
+          }
           return this.typeAheadUp()
         },
         //  down.prevent
         40: (e) => {
           e.preventDefault()
+          if (!this.open) {
+            this.open = true
+            return
+          }
           return this.typeAheadDown()
         },
       }
@@ -1335,6 +1355,17 @@ export default {
 
       if (typeof handlers[e.keyCode] === 'function') {
         return handlers[e.keyCode](e)
+      }
+    },
+
+    /**
+     * @todo: Probably want to add a mapKeyPress method just like we have for keydown.
+     * @param {KeyboardEvent} e
+     */
+    onSearchKeyPress(e) {
+      if (!this.open && e.keyCode === 32) {
+        e.preventDefault()
+        this.open = true
       }
     },
   },
