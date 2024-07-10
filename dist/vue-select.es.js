@@ -412,14 +412,14 @@ https://vue-select.org/api/props.html#getoptionkey`, e, t);
     },
     listboxID: {
       type: String,
-      default: function() {
-        return `vs${this.uid}__listbox`;
+      default: function({ uid: e }) {
+        return `vs${e}__listbox`;
       }
     },
     comboboxID: {
       type: String,
-      default: function() {
-        return `vs${this.uid}__combobox`;
+      default: function({ uid: e }) {
+        return `vs${e}__combobox`;
       }
     },
     ariaLabelledby: {
