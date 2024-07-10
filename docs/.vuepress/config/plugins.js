@@ -1,12 +1,4 @@
-const isDeployPreview = require('./isDeployPreview')
-
 module.exports = [
-  [
-    '@vuepress/google-analytics',
-    {
-      ga: isDeployPreview ? '' : 'UA-12818324-8',
-    },
-  ],
   [
     '@vuepress/pwa',
     {
@@ -18,5 +10,11 @@ module.exports = [
   '@vuepress/plugin-active-header-links',
   '@vuepress/plugin-search',
   '@vuepress/plugin-nprogress',
+  [
+    'sitemap',
+    {
+      hostname: 'https://vue-select.org',
+    },
+  ],
   require('../github/index'),
 ]

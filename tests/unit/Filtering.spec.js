@@ -21,6 +21,14 @@ describe('Filtering Options', () => {
     expect(Select.vm.filteredOptions).toEqual(['bar', 'baz'])
   })
 
+  it('can filter items with spaces', () => {
+    const Select = shallowMount(VueSelect, {
+      propsData: { options: ['foo bar', 'baz'] },
+    })
+    Select.vm.search = ' '
+    expect(Select.vm.filteredOptions).toEqual(['foo bar'])
+  })
+
   it('should not filter the array of strings if filterable is false', () => {
     const Select = shallowMount(VueSelect, {
       propsData: { options: ['foo', 'bar', 'baz'], filterable: false },
