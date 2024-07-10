@@ -716,22 +716,24 @@ export default {
     /**
      * A unique identifier for the element with the listbox.
      * Must be unique for every instance of the component.
+     * If not provided it will follow the pattern `vs${uid}__listbox`.
      */
     listboxID: {
       type: String,
-      default: function () {
-        return `vs${this.uid}__listbox`
+      default: function ({ uid }) {
+        return `vs${uid}__listbox`
       },
     },
 
     /**
      * A unique identifier for the element with the combobox role.
      * Must be unique for every instance of the component.
+     * If not provided it will follow the pattern `vs${uid}__combobox`.
      */
     comboboxID: {
       type: String,
-      default: function () {
-        return `vs${this.uid}__combobox`
+      default: function ({ uid }) {
+        return `vs${uid}__combobox`
       },
     },
 
