@@ -51,7 +51,7 @@
             </li>
         </slot>
         </ul>
-        <slot name="search" v-bind="scope.search">
+        <slot name="search" v-bind="scope.combobox">
           <input
             role="combobox"
             class="vs__search"

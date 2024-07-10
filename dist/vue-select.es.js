@@ -810,7 +810,7 @@ function we(e, t, s, l, n, i) {
             ], 8, fe))
           ])), 256))
         ], 8, pe),
-        r(e.$slots, "search", h(u(i.scope.search)), () => [
+        r(e.$slots, "search", h(u(i.scope.combobox)), () => [
           c("input", g({
             role: "combobox",
             class: "vs__search"
