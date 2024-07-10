@@ -26,7 +26,6 @@
     },
     "private": false,
     "license": "MIT",
-    "prepare": "npm run build",
     "scripts": {
         "dev:docs": "cd docs && yarn serve",
         "build:docs": "cd docs && yarn build",

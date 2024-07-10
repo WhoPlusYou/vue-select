@@ -26,7 +26,7 @@ yarn-error.log*
 
 # Project specific
 coverage
-dist
+#dist # WPY - commented to allow our project to just use dist files built
 test/unit/coverage
 package-lock.json
 dev/dist
