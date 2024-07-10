@@ -6,16 +6,15 @@
   <div :dir="dir" class="v-select" :class="stateClasses">
     <slot name="header" v-bind="scope.header" />
     <div
-      :id="`vs${uid}__combobox`"
       ref="toggle"
       class="vs__dropdown-toggle"
-      role="combobox"
-      :aria-expanded="dropdownOpen.toString()"
-      :aria-owns="`vs${uid}__listbox`"
-      aria-label="Search for option"
       @mousedown="toggleDropdown($event)"
     >
       <div ref="selectedOptions" class="vs__selected-options">
+        <ul
+          class="vs__selected-options-list"
+          :role="multiple ? undefined : 'none'"
+        >
         <slot
           v-for="(option, i) in selectedValue"
           name="selected-option-container"
@@ -24,7 +23,11 @@
           :multiple="multiple"
           :disabled="disabled"
         >
-          <span :key="getOptionKey(option)" class="vs__selected">
+            <li
+              :key="getOptionKey(option)"
+              class="vs__selected"
+              :role="multiple ? undefined : 'none'"
+            >
             <slot
               name="selected-option"
               v-bind="normalizeOptionForSlot(option)"
@@ -37,20 +40,23 @@
               :disabled="disabled"
               type="button"
               class="vs__deselect"
-              :title="`Deselect ${getOptionLabel(option)}`"
-              :aria-label="`Deselect ${getOptionLabel(option)}`"
-              @click="deselect(option)"
+                :title="i18n.deselectButton.title(getOptionLabel(option))"
+                :aria-label="
+                  i18n.deselectButton.ariaLabel(getOptionLabel(option))
+                "
+                @click="deselectButton(option)"
             >
               <component :is="childComponents.Deselect" />
             </button>
-          </span>
+            </li>
         </slot>
-
+        </ul>
         <slot name="search" v-bind="scope.search">
           <input
+            role="combobox"
             class="vs__search"
-            v-bind="scope.search.attributes"
-            v-on="scope.search.events"
+            v-bind="scope.combobox.attributes"
+            v-on="scope.combobox.events"
           />
         </slot>
       </div>
@@ -62,8 +68,8 @@
           :disabled="disabled"
           type="button"
           class="vs__clear"
-          title="Clear Selected"
-          aria-label="Clear Selected"
+          :title="i18n.clearButton.title"
+          :aria-label="i18n.clearButton.ariaLabel"
           @click="clearSelection"
         >
           <component :is="childComponents.Deselect" />
@@ -78,20 +84,21 @@
         </slot>
 
         <slot name="spinner" v-bind="scope.spinner">
-          <div v-show="mutableLoading" class="vs__spinner">Loading...</div>
+          <div v-show="mutableLoading" class="vs__spinner">
+            {{ i18n.spinner.text }}
+          </div>
         </slot>
       </div>
     </div>
     <transition :name="transition">
       <ul
         v-if="dropdownOpen"
-        :id="`vs${uid}__listbox`"
         ref="dropdownMenu"
-        :key="`vs${uid}__listbox`"
         v-append-to-body
         class="vs__dropdown-menu"
         role="listbox"
         tabindex="-1"
+        v-bind="scope.listbox.attributes"
         @mousedown.prevent="onMousedown"
         @mouseup="onMouseUp"
       >
@@ -109,7 +116,7 @@
             'vs__dropdown-option--highlight': index === typeAheadPointer,
             'vs__dropdown-option--disabled': !selectable(option),
           }"
-          :aria-selected="index === typeAheadPointer ? true : null"
+          :aria-selected="isOptionSelected(option) ? 'true' : 'false'"
           @mouseover="selectable(option) ? (typeAheadPointer = index) : null"
           @click.prevent.stop="selectable(option) ? select(option) : null"
         >
@@ -119,14 +126,14 @@
         </li>
         <li v-if="filteredOptions.length === 0" class="vs__no-options">
           <slot name="no-options" v-bind="scope.noOptions">
-            Sorry, no matching options.
+            {{ i18n.noOptions.text }}
           </slot>
         </li>
         <slot name="list-footer" v-bind="scope.listFooter" />
       </ul>
       <ul
         v-else
-        :id="`vs${uid}__listbox`"
+        :id="listboxID"
         role="listbox"
         style="display: none; visibility: hidden"
       ></ul>
@@ -136,6 +143,7 @@
 </template>
 
 <script>
+import { locale as english } from '../locales/en.js'
 import pointerScroll from '@/mixins/pointerScroll.js'
 import typeAheadPointer from '@/mixins/typeAheadPointer.js'
 import ajax from '@/mixins/ajax.js'
@@ -210,6 +218,23 @@ export default {
       default() {
         return []
       },
+    },
+
+    /**
+     * The locale function receives the default english translations for the
+     * component. This allows you to override the whole object, or change
+     * just the values you need.
+     *
+     * @since 3.13.0
+     * @see https://vue-select.org/guide/localization.html
+     */
+    locale: {
+      type: Function,
+      /**
+       * @return {Object}
+       * @param {Object} localeStrings
+       */
+      default: (localeStrings) => localeStrings,
     },
 
     /**
@@ -687,6 +712,49 @@ export default {
       type: [String, Number],
       default: () => uniqueId(),
     },
+
+    /**
+     * A unique identifier for the element with the listbox.
+     * Must be unique for every instance of the component.
+     */
+    listboxID: {
+      type: String,
+      default: function () {
+        return `vs${this.uid}__listbox`
+      },
+    },
+
+    /**
+     * A unique identifier for the element with the combobox role.
+     * Must be unique for every instance of the component.
+     */
+    comboboxID: {
+      type: String,
+      default: function () {
+        return `vs${this.uid}__combobox`
+      },
+    },
+
+    /**
+     * Equivalent to the `aria-labelledby` attribute on inputs.
+     */
+    ariaLabelledby: {
+      type: String,
+      default: undefined,
+    },
+
+    /**
+     * Equivalent to the `aria-label` attribute on inputs.
+     */
+    ariaLabel: {
+      type: String,
+      default: undefined,
+    },
+
+    required: {
+      type: Boolean,
+      default: undefined,
+    },
   },
 
   data() {
@@ -702,6 +770,16 @@ export default {
   },
 
   computed: {
+    /**
+     * Return the strings that will be used throughout the
+     * component for labels, titles, text.
+     *
+     * @return {Object} locale
+     */
+    i18n() {
+      return this.locale(english)
+    },
+
     isReducingValues() {
       return this.$props.reduce !== this.$options.props.reduce.default
     },
@@ -768,16 +846,27 @@ export default {
         filteredOptions: this.filteredOptions,
       }
       return {
-        search: {
+        combobox: {
           attributes: {
             disabled: this.disabled,
             placeholder: this.searchPlaceholder,
             tabindex: this.tabindex,
             readonly: !this.searchable,
-            id: this.inputId,
+            id: this.comboboxID,
             'aria-autocomplete': 'list',
-            'aria-labelledby': `vs${this.uid}__combobox`,
-            'aria-controls': `vs${this.uid}__listbox`,
+            'aria-labelledby': this.ariaLabelledby,
+            'aria-controls': this.listboxID,
+            'aria-expanded': this.dropdownOpen.toString(),
+            'aria-owns': this.listboxID,
+            'aria-label': this.ariaLabel,
+            'aria-required': this.required,
+            'aria-haspopup': 'listbox',
+            tabIndex: '0',
+            autoComplete: 'off',
+            autoCorrect: 'off',
+            autoCapitalize: 'none',
+            spellCheck: 'false',
+            role: 'textbox',
             ref: 'search',
             type: 'search',
             autocomplete: this.autocomplete,
@@ -794,7 +883,17 @@ export default {
             keydown: this.onSearchKeyDown,
             blur: this.onSearchBlur,
             focus: this.onSearchFocus,
-            input: (e) => (this.search = e.target.value),
+            input: (e) => {
+              this.search = e.target.value
+              this.open = true
+            },
+          },
+        },
+        listbox: {
+          attributes: {
+            id: this.listboxID,
+            key: this.listboxID,
+            'aria-multiselectable': this.multiple.toString(),
           },
         },
         spinner: {
@@ -977,6 +1076,12 @@ export default {
     open(isOpen) {
       this.$emit(isOpen ? 'open' : 'close')
     },
+
+    search(search) {
+      if (search.length) {
+        this.open = true
+      }
+    },
   },
 
   created() {
@@ -1044,6 +1149,34 @@ export default {
     },
 
     /**
+     * De-select a given option when button is pressed.
+     * @param  {Object|String} option
+     * @return {void}
+     */
+    deselectButton(option) {
+      // Get the index of the option to be removed
+      const index = this.selectedValue.findIndex((val) =>
+        this.optionComparator(val, option)
+      )
+
+      this.deselect(option)
+
+      // Focus the previous option in the list of selected options.
+      // Unless the first index is being removed, in which case focus the next option.
+      // If no options are left after this deselection, focus the input.
+      if (
+        this.$refs.deselectButtons &&
+        this.$refs.deselectButtons.length > 1 &&
+        index >= 0
+      ) {
+        let newIndex = index === 0 ? 1 : index - 1
+        this.$refs.deselectButtons[newIndex].focus()
+      } else {
+        this.searchEl.focus()
+      }
+    },
+
+    /**
      * Clears the currently selected value(s)
      * @return {void}
      */
@@ -1059,11 +1192,13 @@ export default {
     onAfterSelect(option) {
       if (this.closeOnSelect) {
         this.open = !this.open
-        this.searchEl.blur()
       }
 
       if (this.clearSearchOnSelect) {
         this.search = ''
+      }
+      if (this.noDrop && this.multiple) {
+        this.$nextTick(() => this.$refs.search.focus())
       }
     },
 
@@ -1121,7 +1256,7 @@ export default {
       }
 
       if (this.open && targetIsNotSearch) {
-        this.searchEl.blur()
+        this.open = false
       } else if (!this.disabled) {
         this.open = true
         this.searchEl.focus()
@@ -1261,7 +1396,7 @@ export default {
      */
     onEscape() {
       if (!this.search.length) {
-        this.searchEl.blur()
+        this.closeSearchOptions()
       } else {
         this.search = ''
       }
@@ -1342,11 +1477,19 @@ export default {
         //  up.prevent
         38: (e) => {
           e.preventDefault()
-          return this.typeAheadUp()
+          if (!this.open) {
+            this.open = true
+            return
+          }
+          return e.altKey ? this.closeSearchOptions() : this.typeAheadUp()
         },
         //  down.prevent
         40: (e) => {
           e.preventDefault()
+          if (!this.open) {
+            this.open = true
+            return
+          }
           return this.typeAheadDown()
         },
       }
@@ -1359,6 +1502,17 @@ export default {
 
       if (typeof handlers[e.keyCode] === 'function') {
         return handlers[e.keyCode](e)
+      }
+    },
+
+    /**
+     * @todo: Probably want to add a mapKeyPress method just like we have for keydown.
+     * @param {KeyboardEvent} e
+     */
+    onSearchKeyPress(e) {
+      if (!this.open && e.keyCode === 32) {
+        e.preventDefault()
+        this.open = true
       }
     },
   },

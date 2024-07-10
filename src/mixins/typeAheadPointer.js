@@ -47,6 +47,11 @@ export default {
      * @return {void}
      */
     typeAheadDown() {
+      // Open the listbox if it isn't open already
+      if (!this.open) {
+        this.open = true
+      }
+
       for (
         let i = this.typeAheadPointer + 1;
         i < this.filteredOptions.length;
@@ -76,12 +81,16 @@ export default {
      * Moves the pointer to the last selected option.
      */
     typeAheadToLastSelected() {
-      this.typeAheadPointer =
+      const indexOfLastSelected =
         this.selectedValue.length !== 0
           ? this.filteredOptions.indexOf(
               this.selectedValue[this.selectedValue.length - 1]
             )
           : -1
+
+      if (indexOfLastSelected !== -1) {
+        this.typeAheadPointer = indexOfLastSelected
+      }
     },
   },
 }
