@@ -9,7 +9,8 @@
         "test": "tests"
     },
     "files": [
-        "dist"
+        "dist",
+        "src/locales"
     ],
     "main": "./dist/vue-select.umd.js",
     "module": "./dist/vue-select.es.js",
@@ -22,11 +23,11 @@
             "import": "./dist/vue-select.css",
             "require": "./dist/vue-select.css",
             "style": "./dist/vue-select.css"
-        }
+        },
+        "./src/locales/*": "./src/locales/*"
     },
     "private": false,
     "license": "MIT",
-    "prepare": "npm run build",
     "scripts": {
         "dev:docs": "cd docs && yarn serve",
         "build:docs": "cd docs && yarn build",
