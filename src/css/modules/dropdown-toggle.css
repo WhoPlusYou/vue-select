@@ -29,6 +29,13 @@
     position: relative;
 }
 
+.vs__selected-options-list {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0;
+    padding: 0;
+}
+
 .vs__actions {
     display: flex;
     align-items: center;
