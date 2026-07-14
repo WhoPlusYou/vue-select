@@ -101,5 +101,10 @@
                 "maxSize": "2 KB"
             }
         ]
+    },
+    "allowScripts": {
+        "core-js@2.6.11": true,
+        "esbuild@0.15.18": true,
+        "fsevents@2.3.3": true
     }
 }
